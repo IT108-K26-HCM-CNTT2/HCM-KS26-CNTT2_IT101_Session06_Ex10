@@ -1,0 +1,248 @@
+
+PHẦN 1: PHÂN TÍCH VÀ ĐỀ XUẤT GIẢI PHÁP
+
+1. Input và Output
+
+Input:
+- Thư mục cần tìm kiếm: C:\var\logs
+- Từ khóa cần tìm: TIMEOUT
+- Các file log nằm trong thư mục chính và tất cả thư mục con.
+- Một số file có thể đang bị khóa bởi chương trình khác.
+
+Output:
+- Hiển thị đường dẫn file chứa từ khóa TIMEOUT.
+- Hiển thị số dòng có chứa từ khóa TIMEOUT.
+- Nếu không đọc được file, chương trình bỏ qua file đó và tiếp tục tìm kiếm các file còn lại.
+
+Ví dụ kết quả:
+
+C:\var\logs\app\app_2026-09-17.log:12: TIMEOUT connecting to server
+C:\var\logs\database\db_2026-09-17.log:25: Database TIMEOUT
+C:\var\logs\payment\pay_2026-09-17.log:8: Payment TIMEOUT
+
+Trong ví dụ trên, số 12, 25 và 8 là số dòng chứa lỗi trong từng file.
+
+Lưu ý: Đường dẫn C:\var\logs được sử dụng thay cho /var/logs/ vì hệ thống đang chạy Windows Server. Nếu thư mục thực tế nằm ở vị trí khác thì cần sửa lại đường dẫn.
+
+2. Giải pháp 1: Sử dụng lệnh findstr trong CMD
+
+Lệnh tham khảo:
+
+findstr /S /N /I /C:"TIMEOUT" "C:\var\logs\*"
+
+Ý nghĩa:
+- /S: Tìm kiếm trong thư mục hiện tại và các thư mục con.
+- /N: Hiển thị số dòng tìm thấy.
+- /I: Không phân biệt chữ hoa và chữ thường.
+- /C:"TIMEOUT": Tìm từ khóa TIMEOUT.
+- C:\var\logs\*: Tìm trong các file thuộc thư mục cần quét và thư mục con.
+
+Ưu điểm:
+- Câu lệnh ngắn, dễ sử dụng.
+- Tốc độ tốt với các file văn bản thông thường.
+- Có sẵn trên Windows.
+
+Nhược điểm:
+- Không có cơ chế xử lý lỗi đọc file linh hoạt như trong PowerShell.
+- File không đọc được có thể phát sinh thông báo lỗi.
+- Không chạy trực tiếp trên Linux hoặc macOS nếu không có môi trường tương thích.
+
+3. Giải pháp 2: Sử dụng PowerShell
+
+Lệnh tham khảo:
+
+Get-ChildItem "C:\var\logs" -Recurse -File |
+    Select-String -Pattern "TIMEOUT" -List:$false
+
+Ý nghĩa:
+- Get-ChildItem: Liệt kê file trong thư mục.
+- -Recurse: Tìm kiếm cả các thư mục con.
+- -File: Chỉ lấy file.
+- Select-String: Tìm các dòng chứa từ khóa TIMEOUT.
+- -List:$false: Cho phép trả về tất cả các dòng khớp trong mỗi file.
+
+Ưu điểm:
+- Có thể xử lý nhiều file và thư mục con.
+- Có thể kết hợp thêm điều kiện lọc và xử lý lỗi.
+- Có sẵn trên Windows Server hiện đại.
+- PowerShell 7 có thể sử dụng trên Windows, Linux và macOS.
+
+Nhược điểm:
+- Cú pháp dài hơn findstr.
+- Có thể chậm hơn findstr trong một số trường hợp.
+- Cần bổ sung xử lý lỗi để bỏ qua file không đọc được.
+
+4. Giải pháp 3: Sử dụng Python
+
+Có thể viết chương trình Python để duyệt toàn bộ thư mục bằng os.walk(), đọc từng file và tìm từ khóa TIMEOUT.
+
+Ưu điểm:
+- Dễ mở rộng thành chương trình hoàn chỉnh.
+- Có thể tùy chỉnh cách hiển thị kết quả.
+- Chạy được trên Windows, Linux và macOS khi cài Python.
+
+Nhược điểm:
+- Cần cài đặt Python nếu máy chưa có.
+- Cần viết thêm code để duyệt file, đếm dòng và xử lý ngoại lệ.
+- Với người mới học, cách này phức tạp hơn việc sử dụng một câu lệnh PowerShell.
+
+
+PHẦN 2: BẢNG SO SÁNH VÀ LỰA CHỌN
+
+
+Tiêu chí: Tốc độ xử lý
+
+Giải pháp 1 - findstr CMD:
+Tốc độ tốt khi tìm kiếm văn bản đơn giản trên Windows.
+
+Giải pháp 2 - PowerShell:
+Tốc độ phụ thuộc số lượng và dung lượng file. Có thể chậm hơn findstr trong một số trường hợp nhưng thuận tiện khi cần xử lý lỗi.
+
+Giải pháp 3 - Python:
+Tốc độ phụ thuộc cách viết chương trình và phương pháp đọc file.
+
+
+
+Tiêu chí: Xử lý file bị khóa
+
+Giải pháp 1 - findstr CMD:
+Không có cơ chế xử lý riêng cho từng file một cách linh hoạt. Cần kiểm tra mã thoát hoặc bổ sung script.
+
+Giải pháp 2 - PowerShell:
+Có thể sử dụng tham số -ErrorAction SilentlyContinue và khối try/catch để bỏ qua file không đọc được.
+
+Giải pháp 3 - Python:
+Có thể dùng try/except để bỏ qua file gặp lỗi và tiếp tục xử lý.
+
+
+
+Tiêu chí: Cross-platform
+
+Giải pháp 1 - findstr CMD:
+Chủ yếu dành cho Windows.
+
+Giải pháp 2 - PowerShell:
+PowerShell 7 chạy được trên Windows, Linux và macOS.
+
+Giải pháp 3 - Python:
+Chạy được trên nhiều hệ điều hành nếu đã cài Python.
+
+
+
+Tiêu chí: Độ phức tạp code
+
+Giải pháp 1 - findstr CMD:
+Thấp, chỉ cần một câu lệnh.
+
+Giải pháp 2 - PowerShell:
+Trung bình, cần kết hợp duyệt thư mục, tìm kiếm và xử lý lỗi.
+
+Giải pháp 3 - Python:
+Trung bình đến cao vì cần viết chương trình và xử lý ngoại lệ.
+
+
+
+Tiêu chí: Hiển thị số dòng
+
+Giải pháp 1 - findstr CMD:
+Có thể hiển thị số dòng bằng tham số /N.
+
+Giải pháp 2 - PowerShell:
+Select-String hiển thị tên file, số dòng và nội dung dòng khớp thông qua các thuộc tính Path, LineNumber và Line.
+
+Giải pháp 3 - Python:
+Có thể tự quản lý số dòng trong quá trình đọc file.
+
+
+PHẦN 3: TRIỂN KHAI GIẢI PHÁP ĐƯỢC CHỌN
+
+
+1. Giải pháp được lựa chọn
+
+Em chọn PowerShell vì hệ thống đang sử dụng Windows Server. PowerShell có khả năng duyệt toàn bộ thư mục, tìm kiếm từ khóa và xử lý lỗi đọc file.
+
+Ngoài ra, PowerShell cho phép hiển thị rõ đường dẫn file và số dòng chứa lỗi, giúp kỹ sư truy vết nhanh.
+
+2. Source code PowerShell hoàn chỉnh
+
+Lưu đoạn code dưới đây vào file Search-Timeout.ps1:
+
+$LogPath = "C:\var\logs"
+$Keyword = "TIMEOUT"
+
+if (-not (Test-Path -LiteralPath $LogPath -PathType Container)) {
+    Write-Host "Thu muc log khong ton tai: $LogPath"
+    exit 1
+}
+
+Get-ChildItem -LiteralPath $LogPath -Recurse -File -ErrorAction SilentlyContinue |
+    ForEach-Object {
+        $File = $_.FullName
+
+        try {
+            Select-String -LiteralPath $File `
+                -Pattern $Keyword `
+                -SimpleMatch `
+                -ErrorAction Stop |
+                ForEach-Object {
+                    "{0}:{1}: {2}" -f $_.Path, $_.LineNumber, $_.Line
+                }
+        }
+        catch {
+            Write-Warning "Khong doc duoc file, bo qua: $File"
+        }
+    }
+
+3. Giải thích source code
+
+- $LogPath: Đường dẫn thư mục log cần tìm kiếm.
+- $Keyword: Từ khóa cần tìm.
+- Test-Path: Kiểm tra thư mục có tồn tại hay không.
+- Get-ChildItem -Recurse -File: Duyệt tất cả file trong thư mục và thư mục con.
+- -ErrorAction SilentlyContinue: Bỏ qua các lỗi phát sinh khi liệt kê thư mục hoặc file.
+- Select-String: Tìm kiếm từ khóa trong từng file.
+- -SimpleMatch: Tìm chuỗi TIMEOUT theo nghĩa đen, không xem từ khóa là biểu thức chính quy.
+- try/catch: Xử lý lỗi đọc file để chương trình tiếp tục với file tiếp theo.
+- $_.Path: Đường dẫn file chứa kết quả.
+- $_.LineNumber: Số dòng chứa từ khóa.
+- $_.Line: Nội dung dòng tìm được.
+
+4. Cách chạy chương trình
+
+Bước 1: Mở Notepad.
+
+Bước 2: Copy source code PowerShell ở trên.
+
+Bước 3: Lưu file với tên Search-Timeout.ps1.
+
+Bước 4: Mở PowerShell và chạy:
+
+.\Search-Timeout.ps1
+
+Nếu file được lưu ở thư mục khác, cần chuyển đến thư mục đó trước hoặc sử dụng đường dẫn đầy đủ.
+
+5. Kết quả minh họa
+
+C:\var\logs\app\app_2026-09-17.log:12: TIMEOUT connecting to server
+
+C:\var\logs\database\db_2026-09-17.log:25: Database TIMEOUT
+
+C:\var\logs\payment\pay_2026-09-17.log:8: Payment TIMEOUT
+
+Đây là kết quả minh họa. Kết quả thực tế phụ thuộc vào nội dung các file log.
+
+Lưu ý:
+- Nếu file bị khóa theo cách ngăn việc đọc, chương trình sẽ bắt lỗi và bỏ qua file đó.
+- Nếu file vẫn cho phép đọc khi đang được process khác sử dụng, chương trình vẫn có thể tìm kiếm bình thường.
+- Chương trình không đảm bảo đọc được mọi file bị khóa hoặc file mà tài khoản hiện tại không có quyền truy cập.
+- Nếu không có dòng nào khớp, chương trình không hiển thị kết quả tìm thấy.
+
+
+PHẦN 4: KẾT LUẬN
+
+
+Qua bài tập này, em đã tìm hiểu ba giải pháp tìm kiếm log là findstr CMD, PowerShell và Python.
+
+Mỗi giải pháp có ưu điểm và hạn chế riêng. Trong bối cảnh Windows Server, em chọn PowerShell vì dễ tích hợp với hệ thống, hỗ trợ duyệt thư mục con và có thể xử lý lỗi đọc file.
+
+Giải pháp giúp tìm kiếm các dòng chứa TIMEOUT, hiển thị tên file và số dòng để kỹ sư dễ dàng kiểm tra sự cố.
